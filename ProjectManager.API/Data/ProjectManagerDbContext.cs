@@ -12,11 +12,11 @@ public class ProjectManagerDbContext : IdentityDbContext<User>
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder); // Important when using IdentityDbContext
+        base.OnModelCreating(modelBuilder); 
 
         modelBuilder.Entity<User>(entity =>
         {
-            // Konfigurasi tambahan untuk User jika diperlukan
+
         });
 
         modelBuilder.Entity<Job>(entity =>
@@ -29,7 +29,7 @@ public class ProjectManagerDbContext : IdentityDbContext<User>
 
             // Job Many-to-One Team
             entity.HasOne(j => j.Team)
-                .WithMany() // Team tidak memiliki List<Job> di modelnya
+                .WithMany(j => j.Jobs)
                 .HasForeignKey("AssignedTeamId")
                 .OnDelete(DeleteBehavior.SetNull);
         });
