@@ -30,11 +30,27 @@ public class JobService : IJobService
     }
     
     // Read
-    public async Task<ServiceResult<List<JobDto>>> GetAllJobsAsync(string userId)
+    public async Task<ServiceResult<List<JobDto>>> GetUserJobsAsync(string userId)
     {
         try
         {
-            List<Job> jobs = await _repository.GetAllJobsAsync(userId);
+            List<Job> jobs = await _repository.GetUserJobsAsync(userId);
+            if (jobs.Count == 0)
+            {
+                return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: No jobs found");
+            }
+            return ServiceResult<List<JobDto>>.Success(jobs.Adapt<List<JobDto>>(), "Jobs retrieved successfully");
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: {ex.Message}");
+        }
+    
+    }     public async Task<ServiceResult<List<JobDto>>> GetTeamJobsAsync(int teamId)
+    {
+        try
+        {
+            List<Job> jobs = await _repository.GetTeamJobsAsync(teamId);
             if (jobs.Count == 0)
             {
                 return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: No jobs found");

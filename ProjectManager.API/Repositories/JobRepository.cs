@@ -24,12 +24,21 @@ public class JobRepository : IJobRepository
     }
 
     //Read
-    public async Task<List<Job>> GetAllJobsAsync(string userId)
+    public async Task<List<Job>> GetUserJobsAsync(string userId)
     {
         return await _context.Jobs
             .Include(j => j.User)
             .Include(j => j.Team)
             .Where(j => j.User.Id == userId)
+            .ToListAsync();
+    }
+    
+    public async Task<List<Job>> GetTeamJobsAsync(int teamId)
+    {
+        return await _context.Jobs
+            .Include(j => j.User)
+            .Include(j => j.Team)
+            .Where(j => j.Team.Id == teamId)
             .ToListAsync();
     }
 
