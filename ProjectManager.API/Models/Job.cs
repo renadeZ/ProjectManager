@@ -13,7 +13,11 @@ namespace ProjectManager.API.Models
         public string Title { get; set; } = string.Empty;
 
         public DateTime DueDate { get; set; } = DateTime.UtcNow;
-        public User User { get; set; } = null!;
-        public Team Team { get; set; } = null!;
+
+        public string? AssignedUserId { get; set; }
+        public User? User { get; set; }
+
+        public int? AssignedTeamId { get; set; }
+        public Team? Team { get; set; }
     }
 }

@@ -74,9 +74,6 @@ public class TeamService : ITeamService
                 return ServiceResult<List<UserDto>>.Failure("No members found for this team");
             }
             
-            // Note: Adapting User to UserDto might need custom Mapster config if User entity 
-            // has complex relations not directly matching UserDto properties. 
-            // Mapster handles basic types automatically.
             return ServiceResult<List<UserDto>>.Success(members.Adapt<List<UserDto>>(), "Team members retrieved successfully");
         }
         catch (Exception ex)
@@ -104,6 +101,23 @@ public class TeamService : ITeamService
         catch (Exception ex)
         {
             return ServiceResult<TeamDto>.Failure($"Error updating team: {ex.Message}");
+        }
+    }
+
+    public async Task<ServiceResult<bool>> AssignUserToTeamAsync(string userId, int teamId)
+    {
+        try
+        {
+            var success = await _repository.AssignUserToTeamAsync(userId, teamId);
+            if (!success)
+            {
+                return ServiceResult<bool>.Failure("User or Team not found");
+            }
+            return ServiceResult<bool>.Success(true, "User assigned to team successfully");
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<bool>.Failure($"Error assigning user to team: {ex.Message}");
         }
     }
 

@@ -46,6 +46,18 @@ public class TeamRepository : ITeamRepository
         return team;
     }
 
+    public async Task<bool> AssignUserToTeamAsync(string userId, int teamId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        var team = await _context.Teams.FindAsync(teamId);
+        
+        if (user == null || team == null) return false;
+        
+        user.TeamId = teamId;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     // Delete
     public async Task DeleteTeamAsync(int id)
     {

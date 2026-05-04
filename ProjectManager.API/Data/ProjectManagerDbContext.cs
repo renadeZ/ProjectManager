@@ -6,31 +6,29 @@ namespace ProjectManager.API.Data;
 
 public class ProjectManagerDbContext : IdentityDbContext<User>
 {
-    // public DbSet<User> Users { get; set; }
     public DbSet<Team> Teams { get; set; }
     public DbSet<Job> Jobs { get; set; }
+
+    public ProjectManagerDbContext(DbContextOptions<ProjectManagerDbContext> options) : base(options){}
+
+    public ProjectManagerDbContext(){}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder); 
-
-        modelBuilder.Entity<User>(entity =>
-        {
-
-        });
 
         modelBuilder.Entity<Job>(entity =>
         {
             // Job Many-to-One User
             entity.HasOne(j => j.User)
                 .WithMany(u => u.Jobs)
-                .HasForeignKey("AssignedUserId")
+                .HasForeignKey(j => j.AssignedUserId)
                 .OnDelete(DeleteBehavior.SetNull);    
 
             // Job Many-to-One Team
             entity.HasOne(j => j.Team)
-                .WithMany(j => j.Jobs)
-                .HasForeignKey("AssignedTeamId")
+                .WithMany(t => t.Jobs)
+                .HasForeignKey(j => j.AssignedTeamId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -39,17 +37,16 @@ public class ProjectManagerDbContext : IdentityDbContext<User>
             // Team One-to-Many User
             entity.HasMany(t => t.Members)
                 .WithOne(u => u.Team)
+                .HasForeignKey(u => u.TeamId)
                 .OnDelete(DeleteBehavior.SetNull); 
         });
-            
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=project_manager.db");
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlite("Data Source=project_manager_v2.db");
+        }
     }
-
-    public ProjectManagerDbContext(DbContextOptions<ProjectManagerDbContext> options) : base(options){}
-
-    public ProjectManagerDbContext(){}
 }

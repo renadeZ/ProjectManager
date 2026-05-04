@@ -14,6 +14,7 @@ public interface ITeamRepository
     
     // Update
     Task<Team> UpdateTeamAsync(Team team);
+    Task<bool> AssignUserToTeamAsync(string userId, int teamId);
     
     // Delete
     Task DeleteTeamAsync(int id);

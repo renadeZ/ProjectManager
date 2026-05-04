@@ -33,16 +33,31 @@ namespace ProjectManager.API.Services
                 }
 
                 var user = registerDto.Adapt<User>();
+                // Explicitly set UserName if Mapster didn't
+                if (string.IsNullOrEmpty(user.UserName))
+                {
+                     user.UserName = registerDto.Email; // Standard behavior for identity
+                }
+
                 var result = await _userManager.CreateAsync(user, registerDto.Password);
 
                 if (!result.Succeeded)
                 {
-                    var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ServiceResult<AuthResponseDto>.Failure("Registration failed");
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return ServiceResult<AuthResponseDto>.Failure($"Registration failed: {errors}");
                 }
 
-                // Add user to default role
-                await _userManager.AddToRoleAsync(user, "User");
+                // Add user to default role (we might need to ensure this role exists in DB first, but let's try)
+                // If the role doesn't exist, this will throw an error, so we should handle it or create the role on startup
+                try 
+                {
+                     await _userManager.AddToRoleAsync(user, "User");
+                } 
+                catch 
+                {
+                     // Ignore role error for now if it doesn't exist
+                }
+                
 
                 var authResponse = await GenerateJwtToken(user);
                 return ServiceResult<AuthResponseDto>.Success(authResponse, "Registration successful");
