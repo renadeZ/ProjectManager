@@ -35,10 +35,6 @@ public class TeamController : ControllerBase
         var result = await _teamService.GetAllTeamsAsync();
         if (!result.IsSuccess)
         {
-            if (result.Message == "No teams found")
-            {
-                return NotFound(result.Message);
-            }
             return BadRequest(result.Message);
         }
 
@@ -67,10 +63,6 @@ public class TeamController : ControllerBase
         var result = await _teamService.GetTeamMembersAsync(id);
         if (!result.IsSuccess)
         {
-            if (result.Message == "No members found for this team")
-            {
-                return NotFound(result.Message);
-            }
             return BadRequest(result.Message);
         }
 

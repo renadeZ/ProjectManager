@@ -14,55 +14,42 @@ public class JobService : IJobService
         _repository = repository;
     }
 
-    // Create
     public async Task<ServiceResult<JobDto>> AddJobAsync(JobDto jobDto)
     {
         try
         {
             var job = jobDto.Adapt<Job>();
             Job createdJob = await _repository.AddJobAsync(job);
-            return ServiceResult<JobDto>.Success(createdJob.Adapt<JobDto>(), "Job Created Succesfully");
+            return ServiceResult<JobDto>.Success(createdJob.Adapt<JobDto>(), "Job created successfully");
         }
         catch (Exception ex)
         {
             return ServiceResult<JobDto>.Failure($"Error creating job: {ex.Message}");
         }
     }
-    
-    // Read
     public async Task<ServiceResult<List<JobDto>>> GetUserJobsAsync(string userId)
     {
         try
         {
             List<Job> jobs = await _repository.GetUserJobsAsync(userId);
-            if (jobs.Count == 0)
-            {
-                return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: No jobs found");
-            }
             return ServiceResult<List<JobDto>>.Success(jobs.Adapt<List<JobDto>>(), "Jobs retrieved successfully");
         }
         catch (Exception ex)
         {
             return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: {ex.Message}");
         }
-    
     }     public async Task<ServiceResult<List<JobDto>>> GetTeamJobsAsync(int teamId)
     {
         try
         {
             List<Job> jobs = await _repository.GetTeamJobsAsync(teamId);
-            if (jobs.Count == 0)
-            {
-                return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: No jobs found");
-            }
             return ServiceResult<List<JobDto>>.Success(jobs.Adapt<List<JobDto>>(), "Jobs retrieved successfully");
         }
         catch (Exception ex)
         {
             return ServiceResult<List<JobDto>>.Failure($"Error retrieving jobs: {ex.Message}");
         }
-    }    
-    
+    }
     public async Task<ServiceResult<JobDto>> GetJobByIdAsync(int id)
     {
         try
@@ -70,24 +57,28 @@ public class JobService : IJobService
             Job? job = await _repository.GetJobByIdAsync(id);
             if (job == null)
             {
-                return ServiceResult<JobDto>.Failure($"Error retrieving jobs: No jobs found");
+                return ServiceResult<JobDto>.Failure($"Job not found");
             }
-            return ServiceResult<JobDto>.Success(job.Adapt<JobDto>(), "Jobs retrieved successfully");
+            return ServiceResult<JobDto>.Success(job.Adapt<JobDto>(), "Job retrieved successfully");
         }
         catch (Exception ex)
         {
-            return ServiceResult<JobDto>.Failure($"Error retrieving jobs: {ex.Message}");
+            return ServiceResult<JobDto>.Failure($"Error retrieving job: {ex.Message}");
         }
     }
-    
-    // Update
     public async Task<ServiceResult<JobDto>> UpdateJobAsync(JobDto jobDto)
     {
         try
         {
-            var job = jobDto.Adapt<Job>();
-            await _repository.UpdateJobAsync(job);
-            return ServiceResult<JobDto>.Success(jobDto, "Job updated successfully");
+            var existingJob = await _repository.GetJobByIdAsync(jobDto.Id);
+            if (existingJob == null)
+            {
+                return ServiceResult<JobDto>.Failure("Job not found");
+            }
+
+            jobDto.Adapt(existingJob);
+            await _repository.UpdateJobAsync(existingJob);
+            return ServiceResult<JobDto>.Success(existingJob.Adapt<JobDto>(), "Job updated successfully");
         }
         catch (Exception ex)
         {
@@ -95,7 +86,6 @@ public class JobService : IJobService
         }
     }
 
-    // Delete
     public async Task<ServiceResult<JobDto>> DeleteJobAsync(int id)
     {
         try

@@ -1,17 +1,17 @@
+using Mapster;
 using ProjectManager.API.DTOs;
 using ProjectManager.API.Models;
-using Mapster;
 
 namespace ProjectManager.API.MappingProfiles;
 
-public class UserProfile
+public class UserProfile : IRegister
 {
-    public static void UserConfigure()
+    public void Register(TypeAdapterConfig config)
     {
-        TypeAdapterConfig<User, UserDto>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.Email, src => src.Email);
+        config.NewConfig<RegisterDto, User>()
+            .Map(dest => dest.UserName, src => src.Email);
 
+        config.NewConfig<User, UserDto>()
+            .Map(dest => dest.TeamName, src => src.Team != null ? src.Team.Name : string.Empty);
     }
 }

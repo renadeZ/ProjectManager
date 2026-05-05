@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -33,10 +34,9 @@ namespace ProjectManager.API.Services
                 }
 
                 var user = registerDto.Adapt<User>();
-                // Explicitly set UserName if Mapster didn't
                 if (string.IsNullOrEmpty(user.UserName))
                 {
-                     user.UserName = registerDto.Email; // Standard behavior for identity
+                    user.UserName = registerDto.Email;
                 }
 
                 var result = await _userManager.CreateAsync(user, registerDto.Password);
@@ -47,19 +47,24 @@ namespace ProjectManager.API.Services
                     return ServiceResult<AuthResponseDto>.Failure($"Registration failed: {errors}");
                 }
 
-                // Add user to default role (we might need to ensure this role exists in DB first, but let's try)
-                // If the role doesn't exist, this will throw an error, so we should handle it or create the role on startup
-                try 
+                var role = string.IsNullOrWhiteSpace(registerDto.Role) ? "User" : registerDto.Role;
+                var roles = new List<string> { role };
+                try
                 {
-                     await _userManager.AddToRoleAsync(user, "User");
-                } 
-                catch 
-                {
-                     // Ignore role error for now if it doesn't exist
+                    await _userManager.AddToRoleAsync(user, role);
                 }
-                
+                catch
+                {
+                    roles.Clear();
+                    // If the specific role fails, try adding the default "User" role
+                    if (role != "User")
+                    {
+                        await _userManager.AddToRoleAsync(user, "User");
+                        roles.Add("User");
+                    }
+                }
 
-                var authResponse = await GenerateJwtToken(user);
+                var authResponse = await GenerateJwtToken(user, roles);
                 return ServiceResult<AuthResponseDto>.Success(authResponse, "Registration successful");
             }
             catch (Exception ex)
@@ -72,19 +77,24 @@ namespace ProjectManager.API.Services
         {
             try
             {
-                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                var normalizedEmail = _userManager.NormalizeEmail(loginDto.Email);
+                var user = await _userManager.Users
+                    .Include(u => u.Team)
+                    .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+
                 if (user == null)
                 {
                     return ServiceResult<AuthResponseDto>.Failure("Invalid email or password");
                 }
 
-                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
-                if (!result.Succeeded)
+                var isPasswordValid = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+                if (!isPasswordValid)
                 {
                     return ServiceResult<AuthResponseDto>.Failure("Invalid email or password");
                 }
 
-                var authResponse = await GenerateJwtToken(user);
+                var roles = await _userManager.GetRolesAsync(user);
+                var authResponse = await GenerateJwtToken(user, roles.ToList());
                 return ServiceResult<AuthResponseDto>.Success(authResponse, "Login successful");
             }
             catch (Exception ex)
@@ -97,7 +107,7 @@ namespace ProjectManager.API.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await _userManager.Users.Include(u => u.Team).FirstOrDefaultAsync(u => u.Id == userId);
                 if (user == null)
                 {
                     return ServiceResult<UserDto>.Failure("User not found");
@@ -115,12 +125,13 @@ namespace ProjectManager.API.Services
             }
         }
 
-        private async Task<AuthResponseDto> GenerateJwtToken(User user)
+        private async Task<AuthResponseDto> GenerateJwtToken(User user, List<string>? roles = null)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? "your-super-secret-key-that-is-at-least-256-bits-long");
+            var secret = jwtSettings["Secret"] ?? "your-super-secret-key-that-is-at-least-256-bits-long";
+            var key = Encoding.ASCII.GetBytes(secret);
 
-            var roles = await _userManager.GetRolesAsync(user);
+            roles ??= (await _userManager.GetRolesAsync(user)).ToList();
 
             var claims = new List<Claim>
             {
@@ -145,7 +156,7 @@ namespace ProjectManager.API.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             var userDto = user.Adapt<UserDto>();
-            userDto.Roles = roles.ToList();
+            userDto.Roles = roles;
 
             return new AuthResponseDto
             {

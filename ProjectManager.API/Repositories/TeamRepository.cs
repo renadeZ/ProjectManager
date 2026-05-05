@@ -13,7 +13,6 @@ public class TeamRepository : ITeamRepository
         _context = context;
     }
 
-    // Create
     public async Task<Team> AddTeamAsync(Team team)
     {
         _context.Teams.Add(team);
@@ -21,7 +20,6 @@ public class TeamRepository : ITeamRepository
         return team;
     }
 
-    // Read
     public async Task<List<Team>> GetAllTeamsAsync()
     {
         return await _context.Teams.Include(t => t.Members).ToListAsync();
@@ -31,14 +29,12 @@ public class TeamRepository : ITeamRepository
     {
         return await _context.Teams.Include(t => t.Members).FirstOrDefaultAsync(t => t.Id == id);
     }
-    
     public async Task<List<User>> GetTeamMembersAsync(int id)
     {
         var team = await _context.Teams.Include(t => t.Members).FirstOrDefaultAsync(t => t.Id == id);
         return team?.Members ?? new List<User>();
     }
 
-    // Update
     public async Task<Team> UpdateTeamAsync(Team team)
     {
         _context.Teams.Update(team);
@@ -50,18 +46,15 @@ public class TeamRepository : ITeamRepository
     {
         var user = await _context.Users.FindAsync(userId);
         var team = await _context.Teams.FindAsync(teamId);
-        
         if (user == null || team == null) return false;
-        
         user.TeamId = teamId;
         await _context.SaveChangesAsync();
         return true;
     }
 
-    // Delete
     public async Task DeleteTeamAsync(int id)
     {
-        var team = await GetTeamByIdAsync(id);
+        var team = await _context.Teams.FindAsync(id);
         if (team != null)
         {
             _context.Teams.Remove(team);

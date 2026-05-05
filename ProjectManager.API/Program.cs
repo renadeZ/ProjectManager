@@ -10,6 +10,9 @@ using ProjectManager.API.Models;
 using ProjectManager.API.Services;
 using ProjectManager.API.Repositories;
 using ProjectManager.API.DTOs;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Mapster;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +62,13 @@ builder.Services.AddScoped<IJobRepository, JobRepository>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+var config = TypeAdapterConfig.GlobalSettings;
+config.Scan(Assembly.GetExecutingAssembly());
+builder.Services.AddSingleton(config);
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddControllers();
 
@@ -115,8 +125,27 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<ProjectManagerDbContext>();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ProjectManagerDbContext>();
+    
+    context.Database.OpenConnection();
+    using (var command = context.Database.GetDbConnection().CreateCommand())
+    {
+        command.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;";
+        command.ExecuteNonQuery();
+    }
+    
     context.Database.EnsureCreated();
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roleNames = { "Admin", "User" };
+    foreach (var roleName in roleNames)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -125,7 +154,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Project Manager API v1");
-        c.RoutePrefix = string.Empty; // Makes Swagger UI available at root
+        c.RoutePrefix = string.Empty;
     });
 }
 

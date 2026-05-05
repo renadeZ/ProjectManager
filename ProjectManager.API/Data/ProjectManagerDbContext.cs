@@ -19,13 +19,11 @@ public class ProjectManagerDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<Job>(entity =>
         {
-            // Job Many-to-One User
             entity.HasOne(j => j.User)
                 .WithMany(u => u.Jobs)
                 .HasForeignKey(j => j.AssignedUserId)
                 .OnDelete(DeleteBehavior.SetNull);    
 
-            // Job Many-to-One Team
             entity.HasOne(j => j.Team)
                 .WithMany(t => t.Jobs)
                 .HasForeignKey(j => j.AssignedTeamId)
@@ -34,7 +32,6 @@ public class ProjectManagerDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<Team>(entity =>
         {
-            // Team One-to-Many User
             entity.HasMany(t => t.Members)
                 .WithOne(u => u.Team)
                 .HasForeignKey(u => u.TeamId)

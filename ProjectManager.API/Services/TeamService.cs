@@ -14,7 +14,6 @@ public class TeamService : ITeamService
         _repository = repository;
     }
 
-    // Create
     public async Task<ServiceResult<TeamDto>> AddTeamAsync(TeamDto teamDto)
     {
         try
@@ -29,7 +28,6 @@ public class TeamService : ITeamService
         }
     }
 
-    // Read
     public async Task<ServiceResult<List<TeamDto>>> GetAllTeamsAsync()
     {
         try
@@ -37,7 +35,7 @@ public class TeamService : ITeamService
             List<Team> teams = await _repository.GetAllTeamsAsync();
             if (teams.Count == 0)
             {
-                return ServiceResult<List<TeamDto>>.Failure("No teams found");
+                return ServiceResult<List<TeamDto>>.Success(new List<TeamDto>(), "No teams found");
             }
             return ServiceResult<List<TeamDto>>.Success(teams.Adapt<List<TeamDto>>(), "Teams retrieved successfully");
         }
@@ -69,11 +67,6 @@ public class TeamService : ITeamService
         try
         {
             List<User> members = await _repository.GetTeamMembersAsync(id);
-            if (members.Count == 0)
-            {
-                return ServiceResult<List<UserDto>>.Failure("No members found for this team");
-            }
-            
             return ServiceResult<List<UserDto>>.Success(members.Adapt<List<UserDto>>(), "Team members retrieved successfully");
         }
         catch (Exception ex)
@@ -82,7 +75,6 @@ public class TeamService : ITeamService
         }
     }
 
-    // Update
     public async Task<ServiceResult<TeamDto>> UpdateTeamAsync(int id, TeamDto teamDto)
     {
         try
@@ -92,10 +84,9 @@ public class TeamService : ITeamService
             {
                 return ServiceResult<TeamDto>.Failure("Team not found");
             }
-            existingTeam.Name = teamDto.Name;
             
+            teamDto.Adapt(existingTeam);
             await _repository.UpdateTeamAsync(existingTeam);
-            
             return ServiceResult<TeamDto>.Success(existingTeam.Adapt<TeamDto>(), "Team updated successfully");
         }
         catch (Exception ex)
@@ -121,7 +112,6 @@ public class TeamService : ITeamService
         }
     }
 
-    // Delete
     public async Task<ServiceResult<TeamDto>> DeleteTeamAsync(int id)
     {
         try
@@ -133,7 +123,6 @@ public class TeamService : ITeamService
             }
 
             await _repository.DeleteTeamAsync(id);
-            
             return ServiceResult<TeamDto>.Success(existingTeam.Adapt<TeamDto>(), "Team deleted successfully");
         }
         catch (Exception ex)

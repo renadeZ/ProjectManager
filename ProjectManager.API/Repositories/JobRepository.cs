@@ -14,31 +14,27 @@ public class JobRepository : IJobRepository
         _context = context;
     }
 
-    //Create
     public async Task<Job> AddJobAsync(Job job)
     {
-        // job.DueDate = DateTime.Today.Add(deadlineTime.ToTimeSpan());
         _context.Jobs.Add(job);
         await _context.SaveChangesAsync();
         return job;
     }
 
-    //Read
     public async Task<List<Job>> GetUserJobsAsync(string userId)
     {
         return await _context.Jobs
             .Include(j => j.User)
             .Include(j => j.Team)
-            .Where(j => j.User.Id == userId)
+            .Where(j => j.AssignedUserId == userId)
             .ToListAsync();
     }
-    
     public async Task<List<Job>> GetTeamJobsAsync(int teamId)
     {
         return await _context.Jobs
             .Include(j => j.User)
             .Include(j => j.Team)
-            .Where(j => j.Team.Id == teamId)
+            .Where(j => j.AssignedTeamId == teamId)
             .ToListAsync();
     }
 
@@ -50,17 +46,15 @@ public class JobRepository : IJobRepository
             .FirstOrDefaultAsync(j => j.Id == id);
     }
 
-    //Update
     public async Task UpdateJobAsync(Job job)
     {
         _context.Jobs.Update(job);
         await _context.SaveChangesAsync();
     }
 
-    //Delete
     public async Task DeleteJobAsync(int id)
     {
-        var job = await GetJobByIdAsync(id);
+        var job = await _context.Jobs.FindAsync(id);
         if (job != null)
         {
             _context.Jobs.Remove(job);

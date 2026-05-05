@@ -36,7 +36,7 @@ public class JobController : ControllerBase
         {
             return Ok(result.Data);
         }
-        return NotFound(result.Message);
+        return BadRequest(result.Message);
     }
 
     [HttpGet("team/{teamId}")]
@@ -47,7 +47,7 @@ public class JobController : ControllerBase
         {
             return Ok(result.Data);
         }
-        return NotFound(result.Message);
+        return BadRequest(result.Message);
     }
 
     [HttpGet("{id}")]
@@ -58,7 +58,11 @@ public class JobController : ControllerBase
         {
             return Ok(result.Data);
         }
-        return NotFound(result.Message);
+        if (result.Message == "Job not found")
+        {
+            return NotFound(result.Message);
+        }
+        return BadRequest(result.Message);
     }
 
     [HttpPut("{id}")]

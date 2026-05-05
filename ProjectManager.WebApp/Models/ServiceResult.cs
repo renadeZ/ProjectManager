@@ -1,12 +1,14 @@
-namespace ProjectManager.API.DTOs;
+namespace ProjectManager.WebApp.Models;
 
-public record ServiceResult<T>
+public class ServiceResult<T>
 {
-    public bool IsSuccess { get; private set; }
-    public string? Message { get; private set; }
-    public T? Data { get; private set; }
+    public bool IsSuccess { get; set; }
+    public string? Message { get; set; }
+    public T? Data { get; set; }
 
-    public static ServiceResult<T> Success(T data, string message)
+    public ServiceResult() { }
+
+    public static ServiceResult<T> Success(T data, string message = "")
     {
         return new ServiceResult<T>
         {
