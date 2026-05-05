@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ProjectManager.API.DTOs;
 using ProjectManager.API.Services;
 
@@ -6,6 +7,7 @@ namespace ProjectManager.API.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class JobController : ControllerBase
 {
     private readonly IJobService _jobService;
@@ -21,7 +23,7 @@ public class JobController : ControllerBase
         var result = await _jobService.AddJobAsync(job);
         if (result.IsSuccess)
         {
-            return Ok(result.Data);
+            return CreatedAtAction(nameof(GetJobById), new { id = result.Data?.Id }, result.Data);
         }
         return BadRequest(result.Message);
     }

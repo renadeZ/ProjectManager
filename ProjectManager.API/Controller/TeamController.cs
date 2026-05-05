@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ProjectManager.API.DTOs;
 using ProjectManager.API.Services;
 
@@ -6,6 +7,7 @@ namespace ProjectManager.API.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class TeamController : ControllerBase
 {
     private readonly ITeamService _teamService;
@@ -23,7 +25,7 @@ public class TeamController : ControllerBase
         {
             return BadRequest(result.Message);
         }
-        
+
         return CreatedAtAction(nameof(GetTeamById), new { id = result.Data?.Id }, result);
     }
 

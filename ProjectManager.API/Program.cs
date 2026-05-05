@@ -13,28 +13,23 @@ using ProjectManager.API.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Entity Framework with SQLite
 builder.Services.AddDbContext<ProjectManagerDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=project_manager.db"));
 
-// Add ASP.NET Core Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
-    // Password security settings
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = true;
     
-    // User account settings
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = false;
 })
 .AddEntityFrameworkStores<ProjectManagerDbContext>()
 .AddDefaultTokenProviders();
 
-// Add JWT Bearer Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? "your-super-secret-key-that-is-at-least-256-bits-long");
 
@@ -58,19 +53,15 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add Repository Layer
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 
-// Add Service Layer
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Add Controllers
 builder.Services.AddControllers();
 
-// Add API Documentation with Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -81,7 +72,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "A comprehensive Project Management API with authentication and CRUD operations"
     });
     
-    // Add JWT Authentication to Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
@@ -111,7 +101,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add CORS for cross-origin requests
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -124,14 +113,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-create database
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ProjectManagerDbContext>();
     context.Database.EnsureCreated();
 }
 
-// Configure HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
